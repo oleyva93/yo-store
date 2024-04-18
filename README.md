@@ -30,14 +30,19 @@ Add a `storage` to your component:
 import createStorage from "yo-storage";
 
 const useNews = createStorage((set, get) => ({
-    selected: null,
+    selected: undefined,
     filters: {
         page: 1,
         page_size: 25,
     }
     getPageSize: ()=> get().filters.page_size
     setSelected: (item)=> set({selected: item})
-}));
+    getNews: async ()=> fetch(".../news")
+}),
+(state) => {
+  console.log("This is a middleware: ", state)
+}
+);
 
 export default useNews
 ```
@@ -48,12 +53,16 @@ import useNews from "storage/new-storage"
 
 /// subscribe to any change of storage (subscribe function return a unsubscribe function)
 const unsubscribe = useNews.subscribe((state)=> {
-    if(state.selected.status === "Active") {
-        // set any change with a dispatch function in any place
-        useNews.dispatch({selected: undefined})
+    if(state.selected?.status === "Active") {
         // do something
     }
 })
+
+// you can set the status anywhere
+useNews.setState({selected: null)
+
+// you can retrieve state values anywhere
+const PAGE_SIZE = useNews.getState().filters.page_size;
 
 // you can use a state selector function.
 // this ensures that the component is rerendered only when the selected states change.
@@ -64,7 +73,12 @@ function selector(state){
 function News(){
     const selectedNews = useNews(selector)
 
-    useEffect(()=> unsubscribe, []);
+    const newsNameRef = useRef(selectedNews?.name)
+
+    // Connect to the store on mount, disconnect on unmount, catch state-changes in a reference
+    useEffect(()=> useNews.subscribe((state)=> {
+      newsNameRef.current = state.selected?.name
+    }), []);
 
     return (
         <div>
@@ -80,78 +94,51 @@ function News(){
 If you do not want to install it, you can copy and paste the source code into your project.
 
 ```tsx
-import { useRef, createContext, useContext, useCallback, useSyncExternalStore, ReactNode } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
-type StoreData<T> = {
-  get: () => T
-  set: (value: Partial<T>) => void
-  subscribe: (callback: () => void) => () => void
-}
+type SetValueSlice<T> = Partial<T> | ((state: T) => Partial<T>)
 
-type StoreContextType<T> = StoreData<T> | null
+type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: () => T) => T
 
-type ValueType<T> = Partial<T> | ((state: T) => T)
-
-type ValuesConfig<T> = (set: (value: ValueType<T>) => void, get: () => T) => T
-
-export default function createStore<T>(values: T | ValuesConfig<T>) {
+export default function createStore<T>(values: T | StoreValues<T>, middleware: (state: T) => void = () => {}) {
   const subscribers = new Set<(data: T) => void>()
 
-  function subscribe(callback: (data: T) => void) {
+  function subscribe(callback: (data: T) => void): () => void {
     subscribers.add(callback)
     return () => subscribers.delete(callback)
   }
+  const get: () => T = () => store
 
-  function useStoreData(): StoreData<T> {
-    const get: () => T = useCallback(() => store.current, [])
-
-    const set = useCallback((value: ValueType<T>) => {
-      store.current = {
-        ...store.current,
-        ...(typeof value === 'function' ? value(store.current) : value),
-      }
-
-      subscribers.forEach((callback) => callback(store.current))
-    }, [])
-
-    const store = useRef<T>(typeof values === 'function' ? (values as ValuesConfig<T>)(set, get) : values)
-
-    return {
-      get,
-      set,
-      subscribe,
-    }
-  }
-
-  const StoreContext = createContext<StoreContextType<T>>(null)
-
-  function Provider({ children }: { children: ReactNode }) {
-    return <StoreContext.Provider value={useStoreData()}>{children}</StoreContext.Provider>
-  }
-
-  function useStore(selector?: (state: T) => any): [T, (value: Partial<T>) => void] {
-    const store = useContext(StoreContext)
-    if (!store) {
-      throw new Error('Store not found')
+  const set = (value: SetValueSlice<T>) => {
+    store = {
+      ...store,
+      ...(typeof value === 'function' ? (value as (state: T) => T)(store) : value),
     }
 
-    const handleSelector = useCallback(() => selector?.(store.get()) || store.get(), [selector, store])
+    middleware?.(store)
 
-    const state = useSyncExternalStore(
-      store.subscribe,
-      handleSelector,
-      handleSelector, // for server side rendering
-    )
-
-    return [state, store.set]
+    subscribers.forEach((callback) => callback(store))
   }
+
+  let store = typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values
+
+  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof set] {
+    const handleSelector = useCallback(() => (selector ? selector?.(get()) : get()), [selector])
+
+    const state = useSyncExternalStore(subscribe, handleSelector, handleSelector)
+
+    return [state as Selector, set]
+  }
+
   useStore.subscribe = subscribe
 
-  return {
-    Provider,
-    useStore,
-  }
+  useStore.getState = get
+
+  useStore.setState = set
+
+  return useStore
 }
+
 
 ```
 
