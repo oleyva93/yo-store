@@ -26,7 +26,7 @@ Add a `storage` to your component:
 
 ```tsx
 
-// storage 
+// news-storage.js 
 import createStorage from "yo-storage";
 
 const useNews = createStorage((set, get) => ({
@@ -39,7 +39,12 @@ const useNews = createStorage((set, get) => ({
     setSelected: (item)=> set({selected: item})
 }));
 
-// component
+export default useNews
+```
+
+```tsx
+// news-list.js 
+import useNews from "storage/new-storage"
 
 /// subscribe to any change of storage (subscribe function return a unsubscribe function)
 const unsubscribe = useNews.subscribe((state)=> {
@@ -61,7 +66,12 @@ function News(){
 
     useEffect(()=> unsubscribe, []);
 
-    return (...)
+    return (
+        <div>
+            <h1>{selectedNews.name}</h1>
+            ...
+        </div>
+    )
 }
 ```
 
