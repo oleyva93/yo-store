@@ -145,10 +145,10 @@ export default function createStore<T>(values: T | ValuesConfig<T>) {
 
 ```
 
-[npm-url]: https://www.npmjs.com/package/my-react-typescript-package
-[npm-image]: https://img.shields.io/npm/v/my-react-typescript-package
-[github-license]: https://img.shields.io/github/license/gapon2401/my-react-typescript-package
-[github-license-url]: https://github.com/gapon2401/my-react-typescript-package/blob/master/LICENSE
-[github-build]: https://github.com/gapon2401/my-react-typescript-package/actions/workflows/publish.yml/badge.svg
-[github-build-url]: https://github.com/gapon2401/my-react-typescript-package/actions/workflows/publish.yml
-[npm-typescript]: https://img.shields.io/npm/types/my-react-typescript-package
+[npm-url]: https://www.npmjs.com/package/yo-store
+[npm-image]: https://img.shields.io/npm/v/yo-store
+[github-license]: https://img.shields.io/github/license/oleyva93/yo-store
+[github-license-url]: https://github.com/oleyva93/yo-store/blob/master/LICENSE
+[github-build]: https://github.com/oleyva93/yo-store/actions/workflows/publish.yml/badge.svg
+[github-build-url]: https://github.com/oleyva93/yo-store/actions/workflows/publish.yml
+[npm-typescript]: https://img.shields.io/npm/types/yo-store
