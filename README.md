@@ -100,7 +100,7 @@ type SetValueSlice<T> = Partial<T> | ((state: T) => Partial<T>)
 
 type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: () => T) => T
 
-export default function createStore<T>(values: T | StoreValues<T>, middleware: (state: T) => void = () => {}) {
+export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
   const subscribers = new Set<(data: T) => void>()
 
   function subscribe(callback: (data: T) => void): () => void {
@@ -138,8 +138,6 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware: (
 
   return useStore
 }
-
-
 ```
 
 [npm-url]: https://www.npmjs.com/package/yo-store
