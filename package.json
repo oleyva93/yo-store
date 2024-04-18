@@ -1,6 +1,6 @@
 {
   "name": "yo-store",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Simple state management for React",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
