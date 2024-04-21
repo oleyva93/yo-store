@@ -33,28 +33,22 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   const api = storeApi(values, middleware)
 
   // this is a similar implementation to the one in the zustand library (subscribeWithSelector middleware)
-  function subscribeWithSelector() {
-    const origSubscribe = api.subscribe
-
-    function subscribe<Selector>(
-      selector: (state: T) => Selector,
-      callback?: (currentValue: Selector, previousValue: Selector) => void,
-    ) {
-      if (callback) {
-        let currentValue = selector?.(api.get()) || api.get()
-        const listener = (state: T) => {
-          const nextValue = selector?.(state) || state
-          if (!Object.is(currentValue, nextValue)) {
-            const previousValue = currentValue
-            callback((currentValue = nextValue) as Selector, previousValue as Selector)
-          }
+  function subscribeWithSelector<Selector>(
+    selector: (state: T) => Selector,
+    callback?: (currentValue: Selector, previousValue: Selector) => void,
+  ) {
+    if (callback) {
+      let currentValue = selector?.(api.get()) || api.get()
+      const listener = (state: T) => {
+        const nextValue = selector?.(state) || state
+        if (!Object.is(currentValue, nextValue)) {
+          const previousValue = currentValue
+          callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
-        return origSubscribe(listener)
       }
-      return origSubscribe(selector)
+      return api.subscribe(listener)
     }
-
-    return subscribe
+    return api.subscribe(selector)
   }
 
   function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof api.set] {
@@ -65,7 +59,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     return [state as Selector, api.set]
   }
 
-  useStore.subscribe = subscribeWithSelector()
+  useStore.subscribe = subscribeWithSelector
 
   useStore.getState = api.get
 
