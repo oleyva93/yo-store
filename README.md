@@ -58,8 +58,14 @@ const unsubscribe = useNews.subscribe((state)=> {
     }
 })
 
-// you can set the status anywhere
-useNews.setState({selected: null)
+/// subscribe with selector to a specific store change
+const unsubscribe = useNews.subscribe(
+  (state)=> state.selected
+  (state)=> {
+    if(state.selected?.status === "Active") {
+        // do something
+    }
+})
 
 // you can retrieve state values anywhere
 const PAGE_SIZE = useNews.getState().filters.page_size;
@@ -67,11 +73,11 @@ const PAGE_SIZE = useNews.getState().filters.page_size;
 // you can use a state selector function.
 // this ensures that the component is rerendered only when the selected states change.
 function selector(state){
-    return state.selected;
+    return {selected: state.selected, setSelected: state.setSelected};
 }
 
-function News(){
-    const selectedNews = useNews(selector)
+function News({newsObject}){
+    const {selected, setSelected} = useNews(selector)
 
     const newsNameRef = useRef(selectedNews?.name)
 
@@ -82,8 +88,21 @@ function News(){
 
     return (
         <div>
-            <h1>{selectedNews.name}</h1>
+            <h1>{selected.name}</h1>
             ...
+            <button onClick={()=> {
+              // you can set the status anywhere
+              setSelected(newsObject)
+            }}> 
+              Set News
+            </button>
+
+            <button onClick={()=> {
+              // you can set the status anywhere
+              useNews.setState({selected: null)
+            }}> 
+              Clear News
+            </button>
         </div>
     )
 }
