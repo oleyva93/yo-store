@@ -51,12 +51,12 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     return api.subscribe(selector)
   }
 
-  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof api.set] {
+  function useStore<Selector>(selector: (state: T) => Selector): Selector {
     const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
 
     const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
 
-    return [state as Selector, api.set]
+    return state as Selector
   }
 
   useStore.subscribe = subscribeWithSelector
