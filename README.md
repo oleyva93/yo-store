@@ -83,8 +83,8 @@ function News({newsObject}){
     const newsNameRef = useRef(selected?.name)
 
     // Connect to the store on mount, disconnect on unmount, catch state-changes in a reference
-    useEffect(()=> useNews.subscribe((state)=> {
-      newsNameRef.current = selected?.name
+    useEffect(()=> useNews.subscribe((state) => state.selected.name, (name)=> {
+      newsNameRef.current = name
     }), []);
 
     return (
