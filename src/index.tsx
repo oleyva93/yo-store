@@ -4,7 +4,7 @@ type SetValueSlice<T> = Partial<T> | ((state: T) => Partial<T>)
 
 type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: () => T) => T
 
-export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
+function storeApi<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
   const subscribers = new Set<(data: T) => void>()
 
   function subscribe(callback: (data: T) => void): () => void {
@@ -26,19 +26,46 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
 
   let store = typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values
 
-  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof set] {
-    const handleSelector = useCallback(() => (selector ? selector?.(get()) : get()), [selector])
+  return { subscribe, set, get }
+}
 
-    const state = useSyncExternalStore(subscribe, handleSelector, handleSelector)
+export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
+  const api = storeApi(values, middleware)
 
-    return [state as Selector, set]
+  function subscribeWithSelector<Selector>() {
+    const origSubscribe = api.subscribe
+    return (
+      optListener: (currentValue: unknown, previousValue: unknown) => void,
+      selector?: (state: T) => Selector,
+    ) => {
+      if (optListener) {
+        let currentValue = selector?.(api.get()) || api.get()
+        const listener = (state: T) => {
+          const nextValue = selector?.(state) || state
+          if (!Object.is(currentValue, nextValue)) {
+            const previousValue = currentValue
+            optListener((currentValue = nextValue), previousValue)
+          }
+        }
+        return origSubscribe(listener)
+      }
+      return undefined
+    }
   }
 
-  useStore.subscribe = subscribe
+  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof api.set] {
+    const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
 
-  useStore.getState = get
+    const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
 
-  useStore.setState = set
+    return [state as Selector, api.set]
+  }
+
+  useStore.subscribe = subscribeWithSelector()
+
+  useStore.getState = api.get
+
+  useStore.setState = api.set
 
   return useStore
 }

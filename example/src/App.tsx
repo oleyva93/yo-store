@@ -30,13 +30,12 @@ const useStore = createStore<StoreData>(
   },
 )
 
-const unsubscribe = useStore.subscribe((state) => {
-  if (state.age > 35) {
-    console.log('You are old')
-    return
-  }
-  console.log('you are young')
-})
+const unsubscribe = useStore.subscribe(
+  (age) => {
+    console.log('your age is: ', age)
+  },
+  (state) => state.age,
+)
 
 function App() {
   useEffect(() => unsubscribe, [])
