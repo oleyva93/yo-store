@@ -33,7 +33,7 @@ const useStore = createStore<StoreData>(
 const unsubscribe = useStore.subscribe(
   (state) => state.age,
   (age) => {
-    console.log('you are young: ', age)
+    console.log('you age is: ', age)
   },
 )
 
