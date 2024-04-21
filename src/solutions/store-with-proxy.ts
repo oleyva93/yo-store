@@ -53,7 +53,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     })
   }
 
-  const store = new Proxy((typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values) as object, {
+  const store = new Proxy((typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values) as any, {
     set: (target: Record<string | symbol, unknown>, proName, value) => {
       modifyingKey = proName as string
       target[proName] = value!
