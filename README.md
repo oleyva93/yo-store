@@ -74,10 +74,10 @@ const PAGE_SIZE = useNews.getState().filters.page_size;
 // you can use a state selector function.
 // this ensures that the component is rerendered only when the selected states change.
 function selector(state){
-    return {selected: state.selected, setSelected: state.setSelected};
+    return { selected: state.selected, setSelected: state.setSelected };
 }
 
-function News({newsObject}){
+function News({ newsObject }){
     const {selected, setSelected} = useNews(selector)
 
     const newsNameRef = useRef(selected?.name)
@@ -90,7 +90,7 @@ function News({newsObject}){
     return (
         <div>
             ...
-            <h1>{selected?.descriptions}</h1>
+            <h1>{selected?.description}</h1>
             ...
             <button onClick={()=> {
               // you can set the status anywhere
@@ -101,7 +101,7 @@ function News({newsObject}){
 
             <button onClick={()=> {
               // you can set the status anywhere
-              useNews.setState({selected: null)
+              useNews.setState({ selected: null })
             }}> 
               Clear News
             </button>
