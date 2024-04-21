@@ -78,7 +78,7 @@ function selector(state){
 }
 
 function News({ newsObject }){
-    const {selected, setSelected} = useNews(selector)
+    const { selected, setSelected } = useNews(selector)
 
     const newsNameRef = useRef(selected?.name)
 
