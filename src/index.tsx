@@ -32,6 +32,7 @@ function storeApi<T>(values: T | StoreValues<T>, middleware?: (state: T) => void
 export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
   const api = storeApi(values, middleware)
 
+  // this is a similar implementation to the one in the zustand library (subscribeWithSelector middleware)
   function subscribeWithSelector() {
     const origSubscribe = api.subscribe
 
