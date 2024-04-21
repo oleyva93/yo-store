@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
+export { default as isEqual } from './is-equal'
 
 type GetState<T> = () => T
 
@@ -40,12 +41,16 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>(
     selector: (state: T) => Selector,
     callback?: (currentValue: Selector, previousValue: Selector) => void,
+    equalityFn?: (a: any, b: any) => boolean,
   ) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
       const listener = (state: T) => {
         const nextValue = selector?.(state) || state
-        if (!Object.is(currentValue, nextValue)) {
+
+        const isEqualFn = equalityFn || Object.is
+
+        if (!isEqualFn(currentValue, nextValue)) {
           const previousValue = currentValue
           callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
