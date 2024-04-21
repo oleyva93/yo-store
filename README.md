@@ -7,7 +7,6 @@
 
 It is a simple state manager in React without context or third-party libraries.
 
-
 ## Installation:
 
 ```bash
@@ -26,7 +25,7 @@ Add a `storage` to your component:
 
 ```tsx
 
-// news-storage.js 
+// news-storage.js
 import createStorage from "yo-storage";
 
 const useNews = createStorage((set, get) => ({
@@ -48,7 +47,7 @@ export default useNews
 ```
 
 ```tsx
-// news-list.js 
+// news-list.js
 import useNews from "storage/new-storage"
 
 /// subscribe with selector to a specific store change (subscribe function return a unsubscribe function)
@@ -95,14 +94,14 @@ function News({ newsObject }){
             <button onClick={()=> {
               // you can set the status anywhere
               setSelected(newsObject)
-            }}> 
+            }}>
               Set News
             </button>
 
             <button onClick={()=> {
               // you can set the status anywhere
               useNews.setState({ selected: null })
-            }}> 
+            }}>
               Clear News
             </button>
         </div>
@@ -117,26 +116,30 @@ If you do not want to install it, you can copy and paste the source code into yo
 ```tsx
 import { useCallback, useSyncExternalStore } from 'react'
 
+type GetState<T> = () => T
+
 type SetValueSlice<T> = Partial<T> | ((state: T) => Partial<T>)
 
-type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: () => T) => T
+type SetState<T> = (value: SetValueSlice<T>) => void
 
-function storeApi<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
+type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: GetState<T>) => T
+
+type Middleware<T> = (state: T, newValues: Partial<T>, set: SetState<T>, get: GetState<T>) => void
+
+function storeApi<T>(values: T | StoreValues<T>, middleware?: Middleware<T>) {
   const subscribers = new Set<(data: T) => void>()
 
   function subscribe(callback: (data: T) => void): () => void {
     subscribers.add(callback)
     return () => subscribers.delete(callback)
   }
-  const get: () => T = () => store
+  const get: GetState<T> = () => store
 
-  const set = (value: SetValueSlice<T>) => {
-    store = {
-      ...store,
-      ...(typeof value === 'function' ? (value as (state: T) => T)(store) : value),
-    }
+  const set: SetState<T> = (value) => {
+    const newValue = typeof value === 'function' ? (value as (state: T) => T)(store) : value
+    store = { ...store, ...newValue }
 
-    middleware?.(store)
+    middleware?.(store, newValue, set, get)
 
     subscribers.forEach((callback) => callback(store))
   }
@@ -146,7 +149,7 @@ function storeApi<T>(values: T | StoreValues<T>, middleware?: (state: T) => void
   return { subscribe, set, get }
 }
 
-export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
+export default function createStore<T>(values: T | StoreValues<T>, middleware?: Middleware<T>) {
   const api = storeApi(values, middleware)
 
   // this is a similar implementation to the one in the zustand library (subscribeWithSelector middleware)
@@ -184,10 +187,10 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
 
   return useStore
 }
-
 ```
 
 ### Solution with vanilla.js: [vanilla.js](https://github.com/oleyva93/yo-store/tree/main/src/solutions/vanilla.js)
+
 ### Solution with proxy: [store-with-proxy.js](https://github.com/oleyva93/yo-store/tree/main/src/solutions/store-with-proxy.ts)
 
 [npm-url]: https://www.npmjs.com/package/yo-store
