@@ -129,39 +129,33 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   const api = storeApi(values, middleware)
 
   // this is a similar implementation to the one in the zustand library (subscribeWithSelector middleware)
-  function subscribeWithSelector() {
-    const origSubscribe = api.subscribe
-
-    function subscribe<Selector>(
-      selector: (state: T) => Selector,
-      callback?: (currentValue: Selector, previousValue: Selector) => void,
-    ) {
-      if (callback) {
-        let currentValue = selector?.(api.get()) || api.get()
-        const listener = (state: T) => {
-          const nextValue = selector?.(state) || state
-          if (!Object.is(currentValue, nextValue)) {
-            const previousValue = currentValue
-            callback((currentValue = nextValue) as Selector, previousValue as Selector)
-          }
+  function subscribeWithSelector<Selector>(
+    selector: (state: T) => Selector,
+    callback?: (currentValue: Selector, previousValue: Selector) => void,
+  ) {
+    if (callback) {
+      let currentValue = selector?.(api.get()) || api.get()
+      const listener = (state: T) => {
+        const nextValue = selector?.(state) || state
+        if (!Object.is(currentValue, nextValue)) {
+          const previousValue = currentValue
+          callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
-        return origSubscribe(listener)
       }
-      return origSubscribe(selector)
+      return api.subscribe(listener)
     }
-
-    return subscribe
+    return api.subscribe(selector)
   }
 
-  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof api.set] {
+  function useStore<Selector>(selector: (state: T) => Selector): Selector {
     const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
 
     const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
 
-    return [state as Selector, api.set]
+    return state as Selector
   }
 
-  useStore.subscribe = subscribeWithSelector()
+  useStore.subscribe = subscribeWithSelector
 
   useStore.getState = api.get
 
@@ -171,6 +165,9 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
 }
 
 ```
+
+### Solution with vanilla.js: [vanilla.js](https://github.com/oleyva93/yo-store/tree/main/src/solutions/vanilla.js)
+### Solution with proxy: [store-with-proxy.js](https://github.com/oleyva93/yo-store/tree/main/src/solutions/store-with-proxy.ts)
 
 [npm-url]: https://www.npmjs.com/package/yo-store
 [npm-image]: https://img.shields.io/npm/v/yo-store
