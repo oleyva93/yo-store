@@ -48,6 +48,7 @@ export default useNews
 
 ```tsx
 // news-list.js
+import { isEqual } from 'yo-store'
 import useNews from "storage/new-storage"
 
 /// subscribe with selector to a specific store change (subscribe function return a unsubscribe function)
@@ -66,6 +67,14 @@ const unsubscribe = useNews.subscribe(null, (state)=> {
         // do something
     }
 })
+
+const unsubscribe = useNews.subscribe(
+  (state) => ({ selected: state.selected, filters: state.filters }),
+  (filtered) => {
+    console.log('your filtered values are: ', filtered)
+  },
+  isEqual,
+)
 
 // you can retrieve state values anywhere
 const PAGE_SIZE = useNews.getState().filters.page_size;
@@ -156,12 +165,16 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>(
     selector: (state: T) => Selector,
     callback?: (currentValue: Selector, previousValue: Selector) => void,
+    equalityFn?: (a: any, b: any) => boolean,
   ) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
       const listener = (state: T) => {
         const nextValue = selector?.(state) || state
-        if (!Object.is(currentValue, nextValue)) {
+
+        const isEqualFn = equalityFn || Object.is
+
+        if (!isEqualFn(currentValue, nextValue)) {
           const previousValue = currentValue
           callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
