@@ -5,6 +5,7 @@
     "node_modules"
   ],
   "compilerOptions": {
+    "target": "ES2016",
     "module": "esnext",
     "lib": ["dom", "esnext"],
     "importHelpers": true,
@@ -21,6 +22,6 @@
     "jsx": "react",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
