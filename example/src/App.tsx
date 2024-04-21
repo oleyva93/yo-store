@@ -32,8 +32,8 @@ const useStore = createStore<StoreData>(
 
 const unsubscribe = useStore.subscribe(
   (state) => state.age,
-  (age) => {
-    console.log('your age is: ', age)
+  (state) => {
+    console.log('you are young: ', state)
   },
 )
 
@@ -57,13 +57,13 @@ function App() {
 }
 
 function Input({ name }: { name: 'name' | 'lastName' }) {
-  const [field, setState] = useStore((state) => state[name])
+  const field = useStore((state) => state[name])
   return (
     <div className='p-4 border border-white'>
       <input
         value={field}
         onChange={(e) => {
-          setState({ [name]: e.target.value })
+          useStore.setState({ [name]: e.target.value })
         }}
       ></input>
     </div>
@@ -71,7 +71,7 @@ function Input({ name }: { name: 'name' | 'lastName' }) {
 }
 
 function Value({ name }: { name: 'name' | 'lastName' | 'age' }) {
-  const [field] = useStore((state) => state[name])
+  const field = useStore((state) => state[name])
 
   return (
     <div className='p-4 border border-white'>
@@ -83,7 +83,7 @@ function Value({ name }: { name: 'name' | 'lastName' | 'age' }) {
 }
 
 function FullNameButton() {
-  const [setFullName] = useStore((state) => state.setFullName)
+  const setFullName = useStore((state) => state.setFullName)
 
   return (
     <button
@@ -97,7 +97,7 @@ function FullNameButton() {
 }
 
 function IncrementAgeButton() {
-  const [incrementAge] = useStore((state) => state.incrementAge)
+  const incrementAge = useStore((state) => state.incrementAge)
 
   return (
     <button
