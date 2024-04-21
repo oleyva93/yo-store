@@ -55,8 +55,8 @@ import useNews from "storage/new-storage"
 // in this case when `selected` is changed then subscribe callback is executed
 const unsubscribe = useNews.subscribe(
   (state)=> state.selected
-  (state)=> {
-    if(state.selected?.status === "Active") {
+  (selected)=> {
+    if(selected?.status === "Active") {
         // do something
     }
 })
