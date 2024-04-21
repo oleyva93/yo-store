@@ -4,7 +4,7 @@ type SetValueSlice<T> = Partial<T> | ((state: T) => Partial<T>)
 
 type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: () => T) => T
 
-let modifyingKey: string = ''
+let modifyingKey = ''
 
 export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
   const subscribers = new Set<(data: T) => void>()
@@ -14,9 +14,9 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     return () => subscribers.delete(callback)
   }
 
-  function externalSubscribe(selector: Function, callback?: Function) {
+  function externalSubscribe<Selector>(selector: (store: T) => Selector, callback?: (state: Selector) => void) {
     let getKey = ''
-    let handler = {
+    const handler = {
       get: function (target: any, prop: string) {
         getKey = prop
         return Reflect.get(target, prop)
@@ -26,7 +26,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     subscribe((state) => {
       if (callback) {
         if (modifyingKey === getKey) {
-          return callback(selector(state) || state[getKey as keyof T])
+          return callback(selector(state) || (state as any)?.[getKey])
         }
       } else {
         return selector(state)
@@ -43,7 +43,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     const val = typeof value === 'function' ? value(store) : value
 
     for (const key in val) {
-      store[key] = val[key]
+      store[key] = val[key]!
     }
 
     middleware?.(store)
@@ -53,13 +53,13 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     })
   }
 
-  let store = new Proxy(typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values, {
-    set: (target, proName, value) => {
+  const store = new Proxy((typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values) as object, {
+    set: (target: Record<string | symbol, unknown>, proName, value) => {
       modifyingKey = proName as string
-      target[proName] = value
+      target[proName] = value!
       return true
     },
-  })
+  }) as T
 
   function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof set] {
     const handleSelector = useCallback(() => (selector ? selector?.(get()) : get()), [selector])
