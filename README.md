@@ -80,16 +80,17 @@ function selector(state){
 function News({newsObject}){
     const {selected, setSelected} = useNews(selector)
 
-    const newsNameRef = useRef(selectedNews?.name)
+    const newsNameRef = useRef(selected?.name)
 
     // Connect to the store on mount, disconnect on unmount, catch state-changes in a reference
     useEffect(()=> useNews.subscribe((state)=> {
-      newsNameRef.current = state.selected?.name
+      newsNameRef.current = selected?.name
     }), []);
 
     return (
         <div>
-            <h1>{selected.name}</h1>
+            ...
+            <h1>{selected?.descriptions}</h1>
             ...
             <button onClick={()=> {
               // you can set the status anywhere
