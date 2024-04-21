@@ -51,17 +51,18 @@ export default useNews
 // news-list.js 
 import useNews from "storage/new-storage"
 
-/// subscribe to any change of storage (subscribe function return a unsubscribe function)
-const unsubscribe = useNews.subscribe((state)=> {
+/// subscribe with selector to a specific store change (subscribe function return a unsubscribe function)
+// in this case when `selected` is changed then subscribe callback is executed
+const unsubscribe = useNews.subscribe(
+  (state)=> state.selected
+  (state)=> {
     if(state.selected?.status === "Active") {
         // do something
     }
 })
 
-/// subscribe with selector to a specific store change
-const unsubscribe = useNews.subscribe(
-  (state)=> state.selected
-  (state)=> {
+/// subscribe to any change of storage
+const unsubscribe = useNews.subscribe(null, (state)=> {
     if(state.selected?.status === "Active") {
         // do something
     }
