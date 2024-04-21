@@ -1,4 +1,4 @@
-// import { useEffect } from 'react'
+import { useEffect } from 'react'
 
 import createStore from '../../src/index'
 
@@ -25,38 +25,20 @@ const useStore = createStore<StoreData>(
       set((state) => ({ age: state.age + 1 }))
     },
   }),
-  // (state) => {
-  //   console.log('This is a middleware', state)
-  // },
-)
-
-useStore.subscribe(
-  ({ lastName }) => {
-    console.log('the Name is', name)
-  },
-  (lastName) => {
-    console.log('the lastName is', lastName)
+  (state) => {
+    console.log('This is a middleware', state)
   },
 )
 
-useStore.subscribe(
-  ({ name }) => {
-    return name
-  },
-  (name) => {
-    console.log('the Name is', name)
-  },
-)
-
-useStore.subscribe(
+const unsubscribe = useStore.subscribe(
   (state) => state.age,
   (age) => {
-    console.log('the aaaage ', age)
+    console.log('your age is: ', age)
   },
 )
 
 function App() {
-  // useEffect(() => unsubscribe, [])
+  useEffect(() => unsubscribe, [])
 
   return (
     <>

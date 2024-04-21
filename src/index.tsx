@@ -4,76 +4,66 @@ type SetValueSlice<T> = Partial<T> | ((state: T) => Partial<T>)
 
 type StoreValues<T> = (set: (value: SetValueSlice<T>) => void, get: () => T) => T
 
-let modifyingKey: string = ''
-
-export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
+function storeApi<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
   const subscribers = new Set<(data: T) => void>()
 
   function subscribe(callback: (data: T) => void): () => void {
     subscribers.add(callback)
     return () => subscribers.delete(callback)
   }
-
-  function externalSubscribe(selector: Function, callback?: Function) {
-    let getKey = ''
-    let handler = {
-      get: function (target: any, prop: string) {
-        getKey = prop
-        return Reflect.get(target, prop)
-      },
-    }
-
-    subscribe((state) => {
-      if (callback) {
-        if (modifyingKey === getKey) {
-          return callback(selector(state) || state[getKey as keyof T])
-        }
-      } else {
-        return selector(state)
-      }
-    })
-    if (callback) {
-      selector(new Proxy(get(), handler))
-    }
-  }
-
   const get: () => T = () => store
 
   const set = (value: SetValueSlice<T>) => {
-    const val = typeof value === 'function' ? value(store) : value
-
-    for (const key in val) {
-      store[key] = val[key]
+    store = {
+      ...store,
+      ...(typeof value === 'function' ? (value as (state: T) => T)(store) : value),
     }
 
     middleware?.(store)
 
-    subscribers.forEach((callback) => {
-      return callback(store)
-    })
+    subscribers.forEach((callback) => callback(store))
   }
 
-  let store = new Proxy(typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values, {
-    set: (target, proName, value) => {
-      modifyingKey = proName as string
-      target[proName] = value
-      return true
-    },
-  })
+  let store = typeof values === 'function' ? (values as StoreValues<T>)(set, get) : values
 
-  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof set] {
-    const handleSelector = useCallback(() => (selector ? selector?.(get()) : get()), [selector])
+  return { subscribe, set, get }
+}
 
-    const state = useSyncExternalStore(subscribe, handleSelector, handleSelector)
+export default function createStore<T>(values: T | StoreValues<T>, middleware?: (state: T) => void) {
+  const api = storeApi(values, middleware)
 
-    return [state as Selector, set]
+  // this is a similar implementation to the one in the zustand library (subscribeWithSelector middleware)
+  function subscribeWithSelector<Selector>(
+    selector: (state: T) => Selector,
+    callback?: (currentValue: Selector, previousValue: Selector) => void,
+  ) {
+    if (callback) {
+      let currentValue = selector?.(api.get()) || api.get()
+      const listener = (state: T) => {
+        const nextValue = selector?.(state) || state
+        if (!Object.is(currentValue, nextValue)) {
+          const previousValue = currentValue
+          callback((currentValue = nextValue) as Selector, previousValue as Selector)
+        }
+      }
+      return api.subscribe(listener)
+    }
+    return api.subscribe(selector)
   }
 
-  useStore.subscribe = externalSubscribe
+  function useStore<Selector>(selector: (state: T) => Selector): [Selector, typeof api.set] {
+    const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
 
-  useStore.getState = get
+    const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
 
-  useStore.setState = set
+    return [state as Selector, api.set]
+  }
+
+  useStore.subscribe = subscribeWithSelector
+
+  useStore.getState = api.get
+
+  useStore.setState = api.set
 
   return useStore
 }
