@@ -35,16 +35,16 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>() {
     const origSubscribe = api.subscribe
     return (
-      optListener: (currentValue: unknown, previousValue: unknown) => void,
+      callback: (currentValue: Selector | T, previousValue: Selector | T) => void,
       selector?: (state: T) => Selector,
     ) => {
-      if (optListener) {
+      if (callback) {
         let currentValue = selector?.(api.get()) || api.get()
         const listener = (state: T) => {
           const nextValue = selector?.(state) || state
           if (!Object.is(currentValue, nextValue)) {
             const previousValue = currentValue
-            optListener((currentValue = nextValue), previousValue)
+            callback((currentValue = nextValue), previousValue)
           }
         }
         return origSubscribe(listener)
