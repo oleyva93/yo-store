@@ -143,7 +143,7 @@ function storeApi<T>(values: T | StoreValues<T>, middleware?: Middleware<T>) {
   const get: GetState<T> = () => store
 
   const set: SetState<T> = (value) => {
-    const prevValues = { ...store }
+    const prevValues = store
 
     const newValue = typeof value === 'function' ? (value as (state: T) => T)(store) : value
     store = { ...store, ...newValue }
@@ -167,7 +167,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>(
     selector: (state: T) => Selector,
     callback?: (currentValue: Selector, previousValue: Selector) => void,
-    equalityFn?: (currentVAlue: Selector, previousValue: Selector) => boolean,
+    equalityFn?: (currentValue: Selector, nextValue: Selector) => boolean,
   ) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
@@ -176,7 +176,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
 
         const isEqualFn = equalityFn || Object.is
 
-        if (!isEqualFn(nextValue as Selector, currentValue as Selector)) {
+        if (!isEqualFn(currentValue as Selector, nextValue as Selector)) {
           const previousValue = currentValue
           callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
