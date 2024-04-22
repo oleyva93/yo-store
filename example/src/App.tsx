@@ -105,15 +105,15 @@ function FullNameButton() {
 }
 
 function IncrementAgeButton() {
-  const incrementAge = useStore((state) => state.incrementAge)
+  const store = useStore((state) => ({ incrementAge: state.incrementAge, age: state.age }))
 
   return (
     <button
       onClick={() => {
-        incrementAge()
+        store.incrementAge()
       }}
     >
-      Increment Age
+      Increment Age ({store.age})
     </button>
   )
 }

@@ -1,4 +1,5 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import isEqual from './is-equal'
+import { useSyncExternalStoreWithSelector } from './useSyncExternalStoreWithSelector'
 export { default as isEqual } from './is-equal'
 
 type GetState<T> = () => T
@@ -21,10 +22,14 @@ function storeApi<T>(values: T | StoreValues<T>, middleware?: Middleware<T>) {
   const get: GetState<T> = () => store
 
   const set: SetState<T> = (value) => {
+    const prevValues = { ...store }
+
     const newValue = typeof value === 'function' ? (value as (state: T) => T)(store) : value
     store = { ...store, ...newValue }
 
-    middleware?.(store, newValue, set, get)
+    if (!isEqual(prevValues, store)) {
+      middleware?.(store, newValue, set, get)
+    }
 
     subscribers.forEach((callback) => callback(store))
   }
@@ -61,9 +66,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   }
 
   function useStore<Selector>(selector: (state: T) => Selector): Selector {
-    const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
-
-    const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
+    const state = useSyncExternalStoreWithSelector(api.subscribe, api.get, api.ge, selector)
 
     return state as Selector
   }
