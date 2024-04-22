@@ -47,7 +47,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>(
     selector: (state: T) => Selector,
     callback?: (currentValue: Selector, previousValue: Selector) => void,
-    equalityFn?: (currentValue: Selector, previousValue: Selector) => boolean,
+    equalityFn?: (currentValue: Selector, nextValue: Selector) => boolean,
   ) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
@@ -56,7 +56,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
 
         const isEqualFn = equalityFn || Object.is
 
-        if (!isEqualFn(nextValue as Selector, currentValue as Selector)) {
+        if (!isEqualFn(currentValue as Selector, nextValue as Selector)) {
           const previousValue = currentValue
           callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
