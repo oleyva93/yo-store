@@ -49,7 +49,7 @@ function FullName() {
   const data = useStore((state) => ({ name: state.name, lastName: state.lastName, age: state.age }))
   return (
     <div>
-      Your full name is:
+      Main Data:
       <pre className='grid w-full justify-start justify-items-start '>
         {JSON.stringify(data, null, 2)
           ?.split('\n')
