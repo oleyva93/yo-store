@@ -10,14 +10,9 @@ It is a simple state manager in React without context or third-party libraries.
 ## Installation:
 
 ```bash
-npm install yo-store
+npm install yo-store # or yarn add yo-store or pnpm add yo-store
 ```
 
-or
-
-```bash
-yarn add yo-store
-```
 
 ## Usage :
 
@@ -148,10 +143,14 @@ function storeApi<T>(values: T | StoreValues<T>, middleware?: Middleware<T>) {
   const get: GetState<T> = () => store
 
   const set: SetState<T> = (value) => {
+    const prevValues = { ...store }
+
     const newValue = typeof value === 'function' ? (value as (state: T) => T)(store) : value
     store = { ...store, ...newValue }
 
-    middleware?.(store, newValue, set, get)
+    if (!isEqual(prevValues, store)) {
+      middleware?.(store, newValue, set, get)
+    }
 
     subscribers.forEach((callback) => callback(store))
   }
@@ -168,7 +167,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>(
     selector: (state: T) => Selector,
     callback?: (currentValue: Selector, previousValue: Selector) => void,
-    equalityFn?: (a: any, b: any) => boolean,
+    equalityFn?: (currentVAlue: Selector, previousValue: Selector) => boolean,
   ) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
@@ -177,7 +176,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
 
         const isEqualFn = equalityFn || Object.is
 
-        if (!isEqualFn(currentValue, nextValue)) {
+        if (!isEqualFn(nextValue as Selector, currentValue as Selector)) {
           const previousValue = currentValue
           callback((currentValue = nextValue) as Selector, previousValue as Selector)
         }
