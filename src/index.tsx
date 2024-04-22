@@ -47,7 +47,7 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
   function subscribeWithSelector<Selector>(
     selector: (state: T) => Selector,
     callback?: (currentValue: Selector, previousValue: Selector) => void,
-    equalityFn?: (currentVAlue: Selector, previousValue: Selector) => boolean,
+    equalityFn?: (currentValue: Selector, previousValue: Selector) => boolean,
   ) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
