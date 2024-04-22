@@ -45,11 +45,17 @@ const unsubscribe = useStore.subscribe(
   },
 )
 
+function FullName() {
+  const fullName = useStore((state) => ({ name: state.name, lastName: state.lastName }))
+  return <div>Your full name is: {JSON.stringify(fullName)}</div>
+}
+
 function App() {
   useEffect(() => unsubscribe, [])
 
   return (
     <>
+      <FullName />
       <div className='grid gap-4 border border-white p-4'>
         Yo-Store
         <Input name='name' />

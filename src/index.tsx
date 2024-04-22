@@ -1,4 +1,6 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
+import isEqual from './is-equal'
+
 export { default as isEqual } from './is-equal'
 
 type GetState<T> = () => T
@@ -60,8 +62,25 @@ export default function createStore<T>(values: T | StoreValues<T>, middleware?: 
     return api.subscribe(selector)
   }
 
-  function useStore<Selector>(selector: (state: T) => Selector): Selector {
-    const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
+  function useStore<Selector>(selector: (state: T) => Selector, equalityFn = isEqual): Selector {
+    const handleSelector = useMemo(() => {
+      let hasMemoizedValue = false
+      let memoizedValue: Selector
+
+      const memoizedSelector = () => {
+        const nextValue = selector(api.get())
+        if (!hasMemoizedValue) {
+          hasMemoizedValue = true
+          memoizedValue = nextValue
+        } else if (!equalityFn(memoizedValue, nextValue)) {
+          memoizedValue = nextValue
+        }
+
+        return memoizedValue
+      }
+
+      return memoizedSelector
+    }, [equalityFn, selector])
 
     const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
 
