@@ -46,8 +46,21 @@ const unsubscribe = useStore.subscribe(
 )
 
 function FullName() {
-  const fullName = useStore((state) => ({ name: state.name, lastName: state.lastName }))
-  return <div>Your full name is: {JSON.stringify(fullName)}</div>
+  const data = useStore((state) => ({ name: state.name, lastName: state.lastName, age: state.age }))
+  return (
+    <div>
+      Your full name is:
+      <pre className='grid w-full justify-start justify-items-start '>
+        {JSON.stringify(data, null, 2)
+          ?.split('\n')
+          ?.map((value, index) => (
+            <div key={index + value}>
+              <div>{value}</div>
+            </div>
+          ))}
+      </pre>
+    </div>
+  )
 }
 
 function App() {
@@ -55,7 +68,6 @@ function App() {
 
   return (
     <>
-      <FullName />
       <div className='grid gap-4 border border-white p-4'>
         Yo-Store
         <Input name='name' />
@@ -65,6 +77,7 @@ function App() {
         <Value name='age' />
         <FullNameButton />
         <IncrementAgeButton />
+        <FullName />
       </div>
     </>
   )
