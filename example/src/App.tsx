@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-import createStore from '../../src/index'
+import createStore, { isEqual } from '../../src/index'
 
 interface StoreData {
   name: string
@@ -28,6 +28,14 @@ const useStore = createStore<StoreData>(
   (state) => {
     console.log('This is a middleware', state)
   },
+)
+
+useStore.subscribe(
+  (state) => ({ name: state.name, lastName: state.lastName }),
+  (fullName) => {
+    console.log('your full name is: ', fullName)
+  },
+  isEqual,
 )
 
 const unsubscribe = useStore.subscribe(
