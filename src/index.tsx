@@ -23,7 +23,7 @@ function storeApi<T>(values: T | StoreValues<T>, middleware?: Middleware<T>) {
   const get: GetState<T> = () => store
 
   const set: SetState<T> = (value) => {
-    const prevValues = { ...store }
+    const prevValues = store
 
     const newValue = typeof value === 'function' ? (value as (state: T) => T)(store) : value
     store = { ...store, ...newValue }
