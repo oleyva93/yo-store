@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { createContext, useEffect } from 'react'
 
-import createStore, { isEqual } from '../../src/index'
+import createStore, { StoreApiType, isEqual } from '../../src/index'
+import { createSelector } from '../../src/with-context'
 
 interface StoreData {
   name: string
@@ -10,6 +11,20 @@ interface StoreData {
   setFullName: (fullName: string) => void
   incrementAge: () => void
 }
+
+type InitialState = {
+  count: number
+  total: number
+  setCount: () => void
+}
+
+const context = createContext<StoreApiType<InitialState>>({
+  get: () => ({ count: 0, total: 0, setCount: () => {} }),
+  set: () => {},
+  subscribe: () => () => {},
+})
+
+const useThisStore = createSelector<InitialState>(context)
 
 const useStore = createStore<StoreData>(
   (set, get) => ({
@@ -25,12 +40,13 @@ const useStore = createStore<StoreData>(
       set((state) => ({ age: state.age + 1 }))
     },
   }),
+
   (state) => {
     console.log('This is a middleware', state)
   },
 )
 
-useStore.subscribe(
+useStore.subscribeWithSelector(
   (state) => ({ name: state.name, lastName: state.lastName }),
   (fullName) => {
     console.log('your full name is: ', fullName)
@@ -38,7 +54,7 @@ useStore.subscribe(
   isEqual,
 )
 
-const unsubscribe = useStore.subscribe(
+const unsubscribe = useStore.subscribeWithSelector(
   (state) => state.age,
   (age) => {
     console.log('your age is: ', age)
@@ -47,7 +63,59 @@ const unsubscribe = useStore.subscribe(
 
 function FullName() {
   const fullName = useStore((state) => ({ name: state.name, lastName: state.lastName }))
+
   return <div>Your full name is: {JSON.stringify(fullName)}</div>
+}
+
+function Counter() {
+  const count = useThisStore((state) => state.count)
+  const setCount = useThisStore((state) => state.setCount)
+
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={setCount}>count</button>
+    </div>
+  )
+}
+
+function Total() {
+  const total = useThisStore((state) => state.total)
+
+  console.log('total', total)
+
+  return (
+    <div>
+      <p>{total}</p>
+    </div>
+  )
+}
+
+function CounterProvider({ children }: { children: React.ReactNode }) {
+  const store = createStore<InitialState>(
+    (set) => ({
+      count: 0,
+      total: 99999,
+      setCount: () => {
+        set((state) => ({ count: state.count + 1 }))
+      },
+    }),
+    (state) => {
+      console.log('This is a middleware', state)
+    },
+  )
+
+  return (
+    <context.Provider
+      value={{
+        get: store.getState,
+        set: store.setState,
+        subscribe: store.subscribe,
+      }}
+    >
+      {children}
+    </context.Provider>
+  )
 }
 
 function App() {
@@ -58,6 +126,13 @@ function App() {
       <FullName />
       <div className='grid gap-4 border border-white p-4'>
         Yo-Store
+        <CounterProvider>
+          <Counter />
+          <Total />
+        </CounterProvider>
+        <CounterProvider>
+          <Counter />
+        </CounterProvider>
         <Input name='name' />
         <Input name='lastName' />
         <Value name='name' />
