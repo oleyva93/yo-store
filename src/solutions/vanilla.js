@@ -1,8 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import isEqual from './is-equal'
 
-export {}
-
 function storeApi(values, middleware) {
   const subscribers = new Set()
 
