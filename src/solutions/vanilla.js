@@ -1,4 +1,7 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
+import isEqual from './is-equal'
+
+export {}
 
 function storeApi(values, middleware) {
   const subscribers = new Set()
@@ -11,12 +14,10 @@ function storeApi(values, middleware) {
   const get = () => store
 
   const set = (value) => {
-    store = {
-      ...store,
-      ...(typeof value === 'function' ? value(store) : value),
-    }
+    const newValue = typeof value === 'function' ? value(store) : value
+    store = { ...store, ...newValue }
 
-    middleware?.(store)
+    middleware?.(store, newValue, set, get)
 
     subscribers.forEach((callback) => callback(store))
   }
@@ -29,12 +30,15 @@ function storeApi(values, middleware) {
 export default function createStore(values, middleware) {
   const api = storeApi(values, middleware)
 
-  function subscribeWithSelector(selector, callback) {
+  function subscribeWithSelector(selector, callback, equalityFn) {
     if (callback) {
       let currentValue = selector?.(api.get()) || api.get()
       const listener = (state) => {
         const nextValue = selector?.(state) || state
-        if (!Object.is(currentValue, nextValue)) {
+
+        const isEqualFn = equalityFn || Object.is
+
+        if (!isEqualFn(currentValue, nextValue)) {
           const previousValue = currentValue
           callback((currentValue = nextValue), previousValue)
         }
@@ -44,19 +48,35 @@ export default function createStore(values, middleware) {
     return api.subscribe(selector)
   }
 
-  function useStore(selector) {
-    const handleSelector = useCallback(() => (selector ? selector?.(api.get()) : api.get()), [selector])
+  function useStore(selector, equalityFn = isEqual) {
+    const handleSelector = useMemo(() => {
+      let hasMemoizedValue = false
+      let memoizedValue
+
+      const memoizedSelector = () => {
+        const nextValue = selector(api.get())
+        if (!hasMemoizedValue) {
+          hasMemoizedValue = true
+          memoizedValue = nextValue
+        } else if (!equalityFn(memoizedValue, nextValue)) {
+          memoizedValue = nextValue
+        }
+
+        return memoizedValue
+      }
+
+      return memoizedSelector
+    }, [equalityFn, selector])
 
     const state = useSyncExternalStore(api.subscribe, handleSelector, handleSelector)
 
-    return [state, api.set]
+    return state
   }
 
-  useStore.subscribe = subscribeWithSelector
-
   useStore.getState = api.get
-
   useStore.setState = api.set
+  useStore.subscribe = api.subscribe
+  useStore.subscribeWithSelector = subscribeWithSelector
 
   return useStore
 }
